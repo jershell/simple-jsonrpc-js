@@ -1,0 +1,10 @@
+{
+  "name": "simple-jsonrpc-js",
+  "version": "0.0.1",
+  "license": "MIT",
+  "main": "./simple-jsonrpc-js.js",
+  "ignore": [],
+  "dependencies": {
+    "lodash": "4.13.1"
+  }
+}
