@@ -1,7 +1,10 @@
 (function(undefined) {
     'use strict';
+    if(_ === undefined && require !== undefined){
+        var _ = require('lodash');
+    }
     var simple_jsonrpc = function(){
-        console.log('init simple_jsonrpc instance');
+
         var ERRORS = {
             "INVALID_REQUEST": {
                 "code": -32600,
@@ -69,7 +72,7 @@
                                     //         argsValues.push(undefined);
                                     //     }
                                     // });
-                                    // console.debug('argsValues', argsValues);
+                                    // console.log('argsValues', argsValues);
                                     // return dispatcher[frame.method].apply(dispatcher, argsValues);
                                 }());
                         }
@@ -131,15 +134,46 @@
                 delete waitingframe[frame.id];
             }
             else if(frame.error && !frame.id){
-                console.debug('unknown error', frame.error);
+                console.log('unknown error', frame.error);
             }
             return waitingframe[frame.id];
+        }
+
+        function error(jsonrpcError, exception){
+            var error = _.clone(jsonrpcError);
+            error.data = exception.message;
+            return error;
+        }
+
+        function resolver(message){
+            try {
+                if(_.isArray(message)){
+                    // var r;
+                    // frames.forEach(function(frame){
+                    //     r = resolveFrame(frame);
+                    //     if(isPromise(r)){
+                    //
+                    //     }
+                    // });
+                    console.error('not implement');
+                    throw "not implement"
+                }
+                else if(_.isObject(message)){
+                    resolveFrame(message);
+                }
+            }
+            catch (e){
+                self.toStream(JSON.stringify({
+                    "jsonrpc": "2.0",
+                    "error": error(ERRORS.INTERNAL_ERROR, e)
+                }));
+            }
         }
 
         //{"jsonrpc": "2.0", "method": "subtract", "params": {"subtrahend": 23, "minuend": 42}, "id": 3}
         //{"jsonrpc": "2.0", "method": "subtract", "params": [23, 42], "id": 2}
         self.toStream = function(a){
-            console.debug(arguments);
+            console.log(arguments);
         };
 
         self.dispatch = function(functionName, callback) {
@@ -170,7 +204,7 @@
             });
         };
 
-        self.callNotification = function(){
+        self.callNotification = function(method, params){
             var message = {
                 "jsonrpc": "2.0",
                 "method": method,
@@ -187,25 +221,7 @@
         self.messageHandler = function(rawMessage){
             try {
                 var message = JSON.parse(rawMessage);
-
-                if(_.isArray(message)){
-                    // var r;
-                    // frames.forEach(function(frame){
-                    //     r = resolveFrame(frame);
-                    //     if(isPromise(r)){
-                    //
-                    //     }
-                    // });
-                    console.error('not implement');
-                    self.toStream(JSON.stringify({
-                        "jsonrpc": "2.0",
-                        "error": ERRORS.INTERNAL_ERROR
-                    }));
-                    throw "not implement"
-                }
-                else if(_.isObject(message)){
-                    resolveFrame(message);
-                }
+                resolver(message);
             }
             catch (e) {
                 self.toStream(JSON.stringify({
@@ -216,7 +232,7 @@
         };
     };
 
-    var result = new simple_jsonrpc();
+    var result = simple_jsonrpc;
 
     if (typeof define == 'function' && define.amd) {
         define('simple_jsonrpc', [], function() {

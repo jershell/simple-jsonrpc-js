@@ -21,4 +21,8 @@
     "url": "https://github.com/jershell/simple-jsonrpc-js/issues"
   },
   "homepage": "http://future_home_page.org/dev/simple-jsonrpc-js",
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "mocha": "^2.5.3"
+  }
 }
