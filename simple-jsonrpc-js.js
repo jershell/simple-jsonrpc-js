@@ -1,18 +1,23 @@
 (function(undefined) {
     'use strict';
-    if(_ === undefined && require !== undefined){
-        var _ = require('lodash');
+    var _;
+    if(typeof _ === "undefined" && typeof require !== "undefined"){
+        _ = require('lodash');
     }
+    else if(typeof _ === "undefined" && typeof window._ !== "undefined"){
+        _ = window._;
+    }
+  
     var simple_jsonrpc = function(){
 
         var ERRORS = {
-            "INVALID_REQUEST": {
-                "code": -32600,
-                "message": "Invalid Request	The JSON sent is not a valid Request object."
-            },
             "PARSE_ERROR": {
                 "code": -32700,
                 "message": "Invalid JSON was received by the server. An error occurred on the server while parsing the JSON text."
+            },
+            "INVALID_REQUEST": {
+                "code": -32600,
+                "message": "Invalid Request	The JSON sent is not a valid Request object."
             },
             "METHOD_NOT_FOUND": {
                 "code": -32601,
@@ -56,57 +61,69 @@
                         var result;
 
                         if (frame.hasOwnProperty('params')) {
-                            result = _.isArray(frame.params) ?
-                                dispatcher[frame.method].apply(dispatcher, frame.params) :
-                                (function () {
-                                    throw new Error('position params is not implemented');
-                                    // var argsName = $injector.annotate(dispatcher[frame.method]),
-                                    //     argsValues = [];
-                                    //
-                                    // argsName.forEach(function (arg) {
-                                    //
-                                    //     if (frame.params.hasOwnProperty(arg)) {
-                                    //         argsValues.push(frame.params[arg]);
-                                    //     }
-                                    //     else {
-                                    //         argsValues.push(undefined);
-                                    //     }
-                                    // });
-                                    // console.log('argsValues', argsValues);
-                                    // return dispatcher[frame.method].apply(dispatcher, argsValues);
-                                }());
+                            if(_.isArray(frame.params)){
+                                result = dispatcher[frame.method].fn.apply(dispatcher, frame.params);
+                            }
+                            else if(_.isObject(frame.params)){
+                                if(dispatcher[frame.method].params instanceof Array){
+                                    var argsValues = [];
+                                    dispatcher[frame.method].params.forEach(function (arg) {
+
+                                        if (frame.params.hasOwnProperty(arg)) {
+                                            argsValues.push(frame.params[arg]);
+                                        }
+                                        else {
+                                            argsValues.push(undefined);
+                                        }
+                                    });
+                                    result = dispatcher[frame.method].fn.apply(dispatcher, argsValues);
+                                }
+                                else {
+                                    throw new Error('Need register these parameters for their use');
+                                }
+                            }
                         }
                         else {
                             result = dispatcher[frame.method]();
                         }
 
-                        if (isPromise(result)) {
-                            result
-                                .then(function (res) {
-                                    self.toStream(JSON.stringify({
-                                        "jsonrpc": "2.0",
-                                        "id": frame.id,
-                                        "result": res
-                                    }));
-                                })
-                                .catch(function (E) {
-                                    console.error(E);
-                                    var error = ERRORS.INTERNAL_ERROR;
-                                    error.data = E.message;
+                        if(frame.hasOwnProperty('id')){
+                            if (isPromise(result)) {
+                                result
+                                    .then(function (res) {
+                                        if(_.isUndefined(res)){
+                                            res = true;
+                                        }
+                                        self.toStream(JSON.stringify({
+                                            "jsonrpc": "2.0",
+                                            "id": frame.id,
+                                            "result": res
+                                        }));
+                                    })
+                                    .catch(function (E) {
+                                        console.error(E);
+                                        var error = ERRORS.INTERNAL_ERROR;
+                                        error.data = E.message;
 
-                                    self.toStream(JSON.stringify({
-                                        "jsonrpc": "2.0",
-                                        "id": frame.id,
-                                        "error": error
-                                    }));
-                                });
-                        }
-                        else {
-                            self.toStream(JSON.stringify({
-                                "jsonrpc": "2.0",
-                                "id": frame.id,
-                                "result": result
-                            }));
+                                        self.toStream(JSON.stringify({
+                                            "jsonrpc": "2.0",
+                                            "id": frame.id,
+                                            "error": error
+                                        }));
+                                    });
+                            }
+                            else {
+
+                                if(_.isUndefined(result)){
+                                    result = true;
+                                }
+
+                                self.toStream(JSON.stringify({
+                                    "jsonrpc": "2.0",
+                                    "id": frame.id,
+                                    "result": result
+                                }));
+                            }
                         }
                     }
                     catch(Error){
@@ -122,11 +139,14 @@
                     }
                 }
                 else {
-                    self.toStream({
+                    var error = ERRORS.METHOD_NOT_FOUND;
+                    error.data = frame.method;
+
+                    self.toStream(JSON.stringify({
                         "jsonrpc": "2.0",
                         "id": frame.id,
-                        "error": ERRORS.METHOD_NOT_FOUND
-                    });
+                        "error": error
+                    }));
                 }
             }
             else if(frame.error && frame.id){
@@ -143,6 +163,31 @@
             var error = _.clone(jsonrpcError);
             error.data = exception.message;
             return error;
+        }
+
+
+        function isError(message){
+            return message.hasOwnProperty('error') && message.hasOwnProperty('id');
+        }
+
+        function isRequest(message){
+            return message.hasOwnProperty('method') && message.hasOwnProperty('id');
+        }
+
+        function isResponse(message){
+
+        }
+
+        function validateMessage(message){
+            if(message.hasOwnProperty("message"))
+            if(_.isArray(message)){
+
+            }
+            else if(_.isObject(message) && !_.isEmpty(message)){
+                isError()
+                isRequest()
+                isResponse()
+            }
         }
 
         function resolver(message){
@@ -176,8 +221,23 @@
             console.log(arguments);
         };
 
-        self.dispatch = function(functionName, callback) {
-            dispatcher[functionName] = callback;
+        self.dispatch = function(functionName, paramsNameFn, fn) {
+
+            if(_.isString(functionName) && _.isArray(paramsNameFn) && _.isFunction(fn)){
+                dispatcher[functionName] = {
+                    fn: fn,
+                    params: paramsNameFn
+                };
+            }
+            else if(_.isString(functionName) && _.isFunction(paramsNameFn) && _.isUndefined(fn)){
+                dispatcher[functionName] = {
+                    fn: paramsNameFn,
+                    params: null
+                };
+            }
+            else {
+                throw new Error('Missing required argument: functionName - string, paramsNameFn - string or function');
+            }
         };
 
         self.call = function(method, params){
@@ -224,6 +284,7 @@
                 resolver(message);
             }
             catch (e) {
+                console.log(e);
                 self.toStream(JSON.stringify({
                     "jsonrpc": "2.0",
                     "error": ERRORS.PARSE_ERROR
@@ -239,8 +300,11 @@
             return result;
         });
     }
-    else if(typeof module !== undefined && typeof module.exports !== undefined ){
+    else if(typeof module !== "undefined" && typeof module.exports !== "undefined" ){
         module.exports = result;
+    }
+    else if(typeof window !== "undefined"){
+        window.simple_jsonrpc = result;
     }
     else {
         return result;

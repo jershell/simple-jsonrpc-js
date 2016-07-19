@@ -174,9 +174,8 @@ describe('Request object', function(){
 
 describe('Response object', function () {
 
-    beforeEach(function() {
-        JsonRpc = new simple_jsonrpc();
-    });
+    var JsonRpc;
+
 
     // Handle incoming messages
     //1     Incoming call
@@ -190,6 +189,10 @@ describe('Response object', function () {
     //5     Outgoing error
 
     describe('Success', function(){
+
+        beforeEach(function() {
+            JsonRpc = new simple_jsonrpc();
+        });
 
         it('Incoming call. Positional parameters. Should be return object with result, id, jsonrpc properties', function(){
             JsonRpc.dispatch('add', function(x, y){
@@ -210,7 +213,7 @@ describe('Response object', function () {
         });
 
         it('Incoming call. Named parameters. Should be return object with result, id, jsonrpc properties', function(){
-            JsonRpc.dispatch('add', function(x, y){
+            JsonRpc.dispatch('add', ['x', 'y'], function(x, y){
                 return x+y;
             });
 
@@ -224,36 +227,36 @@ describe('Response object', function () {
                 expect(inputJson).to.not.have.ownProperty('error');
             };
 
-            JsonRpc.messageHandler('{"jsonrpc": "2.0", "id": 2, "method": "add", "params": {"x":32, "y": 48}');
+            JsonRpc.messageHandler('{"jsonrpc": "2.0", "id": 2, "method": "add", "params": {"x":32, "y": 48}}');
 
         });
 
-        it('Incoming notification. Positional parameters. Should be nothing return', function(){
-            JsonRpc.dispatch('alert', function(message, level){
+        it('Incoming notification. Positional parameters. Should be nothing return', function(done){
+            JsonRpc.dispatch('alert', ["message", "level"], function(message, level){
                 expect(message).to.equal("text");
                 expect(level).to.equal(5);
                 return message;
             });
 
-            JsonRpc.toStream = function(message, level){
-                done(new Error('Notification not should sending the result'));
+            JsonRpc.toStream = function(msg){
+                done(new Error('Notification not should sending the result'+msg));
             };
 
-            JsonRpc.messageHandler('{"jsonrpc": "2.0", "id": 2, "method": "alert", "params": ["text", 5]}');
+            JsonRpc.messageHandler('{"jsonrpc": "2.0", "method": "alert", "params": ["text", 5]}');
         });
 
-        it('Incoming notification. Named parameters. Should be nothing return', function(){
-            JsonRpc.dispatch('alert', function(message, level){
+        it('Incoming notification. Named parameters. Should be nothing return', function(done){
+            JsonRpc.dispatch('alert', ["message", "level"], function(message, level){
                 expect(message).to.equal("text");
                 expect(level).to.equal(5);
                 return message;
             });
 
-            JsonRpc.toStream = function(){
-                done(new Error('Notification not should sending the result'));
+            JsonRpc.toStream = function(msg){
+                done(new Error('Notification not should sending the result:'+msg));
             };
 
-            JsonRpc.messageHandler('{"jsonrpc": "2.0", "id": 2, "method": "alert", "params": {"level": 5, "message": "text"}');
+            JsonRpc.messageHandler('{"jsonrpc": "2.0", "method": "alert", "params": {"level": 5, "message": "text"}}');
         });
 
         it('Incoming results. Should be resolve call', function(){
@@ -266,12 +269,17 @@ describe('Response object', function () {
                 .then(function(result){
                     expect(result).to.equal(5);
                 });
-            JsonRpc.messageHandler('{"jsonrpc": "2.0", "id": 0, "result": "5"');
+            JsonRpc.messageHandler('{"jsonrpc": "2.0", "id": 0, "result": "5"}');
         });
 
     });
 
     describe('Error', function(){
+        
+        beforeEach(function() {
+            JsonRpc = new simple_jsonrpc();
+        });
+
         it('should be contained the error property', function(){
             JsonRpc.dispatch('add', function(x, y){
                 return x+y;
