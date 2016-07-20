@@ -17,19 +17,19 @@
             },
             "INVALID_REQUEST": {
                 "code": -32600,
-                "message": "Invalid Request	The JSON sent is not a valid Request object."
+                "message": "Invalid Request. The JSON sent is not a valid Request object."
             },
             "METHOD_NOT_FOUND": {
                 "code": -32601,
-                "message": "Method not found	The method does not exist / is not available."
+                "message": "Method not found. The method does not exist / is not available."
             },
             "INVALID_PARAMS": {
                 "code": -32602,
-                "message": "Invalid params	Invalid method parameter(s)."
+                "message": "Invalid params. Invalid method parameter(s)."
             },
             "INTERNAL_ERROR": {
                 "code": -32603,
-                "message": "Internal error	Internal JSON-RPC error."
+                "message": "Internal error. Internal JSON-RPC error."
             }
         };
 
@@ -38,185 +38,198 @@
             id = 0,
             dispatcher = {};
 
+
+        function setError(jsonrpcError, exception){
+            var error = _.clone(jsonrpcError);
+            if(!!exception){
+                if(_.isObject(exception) && exception.hasOwnProperty("message")) {
+                    error.data = exception.message;
+                }
+                else if(_.isString(exception)){
+                    error.data = exception;
+                }
+            }
+            return error;
+        }
+
         function isPromise(thing){
             return !!thing && 'function' === typeof thing.then;
         }
 
-        function resolveFunction(frame) {
-
-        }
-
-        function resolveFrame (frame){
-
-            //resolve called function
-            if(frame.id && frame.hasOwnProperty('result')){
-                waitingframe[frame.id].resolve(frame.result);
-                delete waitingframe[frame.id];
-            }
-            //remote call
-            else if(frame.method && !frame.result){
-
-                if(dispatcher.hasOwnProperty(frame.method)){
-                    try {
-                        var result;
-
-                        if (frame.hasOwnProperty('params')) {
-                            if(_.isArray(frame.params)){
-                                result = dispatcher[frame.method].fn.apply(dispatcher, frame.params);
-                            }
-                            else if(_.isObject(frame.params)){
-                                if(dispatcher[frame.method].params instanceof Array){
-                                    var argsValues = [];
-                                    dispatcher[frame.method].params.forEach(function (arg) {
-
-                                        if (frame.params.hasOwnProperty(arg)) {
-                                            argsValues.push(frame.params[arg]);
-                                        }
-                                        else {
-                                            argsValues.push(undefined);
-                                        }
-                                    });
-                                    result = dispatcher[frame.method].fn.apply(dispatcher, argsValues);
-                                }
-                                else {
-                                    throw new Error('Need register these parameters for their use');
-                                }
-                            }
-                        }
-                        else {
-                            result = dispatcher[frame.method]();
-                        }
-
-                        if(frame.hasOwnProperty('id')){
-                            if (isPromise(result)) {
-                                result
-                                    .then(function (res) {
-                                        if(_.isUndefined(res)){
-                                            res = true;
-                                        }
-                                        self.toStream(JSON.stringify({
-                                            "jsonrpc": "2.0",
-                                            "id": frame.id,
-                                            "result": res
-                                        }));
-                                    })
-                                    .catch(function (E) {
-                                        console.error(E);
-                                        var error = ERRORS.INTERNAL_ERROR;
-                                        error.data = E.message;
-
-                                        self.toStream(JSON.stringify({
-                                            "jsonrpc": "2.0",
-                                            "id": frame.id,
-                                            "error": error
-                                        }));
-                                    });
-                            }
-                            else {
-
-                                if(_.isUndefined(result)){
-                                    result = true;
-                                }
-
-                                self.toStream(JSON.stringify({
-                                    "jsonrpc": "2.0",
-                                    "id": frame.id,
-                                    "result": result
-                                }));
-                            }
-                        }
-                    }
-                    catch(Error){
-                        console.error(Error);
-                        var error = ERRORS.INTERNAL_ERROR;
-                        error.data = Error.message;
-
-                        self.toStream(JSON.stringify({
-                            "jsonrpc": "2.0",
-                            "id": frame.id,
-                            "error": error
-                        }));
-                    }
-                }
-                else {
-                    var error = ERRORS.METHOD_NOT_FOUND;
-                    error.data = frame.method;
-
-                    self.toStream(JSON.stringify({
-                        "jsonrpc": "2.0",
-                        "id": frame.id,
-                        "error": error
-                    }));
-                }
-            }
-            else if(frame.error && frame.id){
-                waitingframe[frame.id].reject(frame.error);
-                delete waitingframe[frame.id];
-            }
-            else if(frame.error && !frame.id){
-                console.log('unknown error', frame.error);
-            }
-            return waitingframe[frame.id];
-        }
-
-        function error(jsonrpcError, exception){
-            var error = _.clone(jsonrpcError);
-            error.data = exception.message;
-            return error;
-        }
-
-
         function isError(message){
-            return message.hasOwnProperty('error') && message.hasOwnProperty('id');
+            return !!message.error;
         }
 
         function isRequest(message){
-            return message.hasOwnProperty('method') && message.hasOwnProperty('id');
+            return !!message.method;
         }
 
         function isResponse(message){
-
+            return message.hasOwnProperty('result') && message.hasOwnProperty('id');
         }
 
-        function validateMessage(message){
-            if(message.hasOwnProperty("message"))
-            if(_.isArray(message)){
-
-            }
-            else if(_.isObject(message) && !_.isEmpty(message)){
-                isError()
-                isRequest()
-                isResponse()
-            }
-        }
-
-        function resolver(message){
+        function resolver(message) {
             try {
-                if(_.isArray(message)){
-                    // var r;
-                    // frames.forEach(function(frame){
-                    //     r = resolveFrame(frame);
-                    //     if(isPromise(r)){
-                    //
-                    //     }
-                    // });
+                if (_.isArray(message)) {
                     console.error('not implement');
-                    throw "not implement"
+                    throw new Error("not implement");
                 }
-                else if(_.isObject(message)){
-                    resolveFrame(message);
+                else if (_.isObject(message)) {
+                    if (isError(message)) {
+                        rejectRequest(message);
+                    }
+                    else if (isResponse(message)) {
+                        resolveRequest(message);
+                    }
+                    else if (isRequest(message)) {
+                        handleRemoteRequest(message);
+                    }
+                    else {
+                        self.toStream(JSON.stringify({
+                            "id": null,
+                            "jsonrpc": "2.0",
+                            "error": setError(ERRORS.INVALID_REQUEST)
+                        }));
+                        return ERRORS.INVALID_REQUEST;
+                    }
                 }
             }
             catch (e){
-                self.toStream(JSON.stringify({
-                    "jsonrpc": "2.0",
-                    "error": error(ERRORS.INTERNAL_ERROR, e)
-                }));
+                console.error('Resolver error:' + e.message, e);
             }
         }
 
-        //{"jsonrpc": "2.0", "method": "subtract", "params": {"subtrahend": 23, "minuend": 42}, "id": 3}
-        //{"jsonrpc": "2.0", "method": "subtract", "params": [23, 42], "id": 2}
+        function rejectRequest(error){
+            if(waitingframe.hasOwnProperty(error.id)){
+                waitingframe[error.id].reject(error.error);
+                delete waitingframe[error.id];
+            }
+            else {
+                console.log('unknown request');
+            }
+        }
+
+        function resolveRequest(result){
+            if(waitingframe.hasOwnProperty(result.id)) {
+                waitingframe[result.id].resolve(result.result);
+                delete waitingframe[result.id];
+            }
+            else {
+                console.log('unknown request');
+            }
+        }
+
+        function handleRemoteRequest(request, inBatchPosition){
+            if(dispatcher.hasOwnProperty(request.method)){
+                try {
+                    var result;
+
+                    if (request.hasOwnProperty('params')) {
+                        if(_.isArray(request.params)){
+                            result = dispatcher[request.method].fn.apply(dispatcher, request.params);
+                        }
+                        else if(_.isObject(request.params)){
+                            if(dispatcher[request.method].params instanceof Array){
+                                var argsValues = [];
+                                dispatcher[request.method].params.forEach(function (arg) {
+
+                                    if (request.params.hasOwnProperty(arg)) {
+                                        argsValues.push(request.params[arg]);
+                                        delete request.params[arg];
+                                    }
+                                    else {
+                                        argsValues.push(undefined);
+                                    }
+                                });
+
+                                if(Object.keys(request.params).length > 0){
+                                    self.toStream(JSON.stringify({
+                                        "jsonrpc": "2.0",
+                                        "id": request.id,
+                                        "error": setError(ERRORS.INVALID_PARAMS, {
+                                            message: "Params: " + Object.keys(request.params).toString() + " not used"
+                                        })
+                                    }));
+                                    return ERRORS.INVALID_PARAMS;
+                                }
+                                else {
+                                    result = dispatcher[request.method].fn.apply(dispatcher, argsValues);
+                                }
+                            }
+                            else {
+                                self.toStream(JSON.stringify({
+                                    "jsonrpc": "2.0",
+                                    "id": request.id,
+                                    "error": setError(ERRORS.INVALID_PARAMS, "Undeclared arguments of " + request.method)
+                                }));
+                                return ERRORS.INVALID_PARAMS;
+                            }
+                        }
+                    }
+                    else {
+                        result = dispatcher[request.method]();
+                    }
+
+                    if(request.hasOwnProperty('id')){
+                        if (isPromise(result)) {
+                            result.then(function (res) {
+                                    if(_.isUndefined(res)){
+                                        res = true;
+                                    }
+                                    self.toStream(JSON.stringify({
+                                        "jsonrpc": "2.0",
+                                        "id": request.id,
+                                        "result": res
+                                    }));
+                                })
+                                .catch(function (e) {
+                                    self.toStream(JSON.stringify({
+                                        "jsonrpc": "2.0",
+                                        "id": request.id,
+                                        "error": setError(ERRORS.INTERNAL_ERROR, e)
+                                    }));
+                                    return Promise.reject(ERRORS.INTERNAL_ERROR);
+                                });
+                        }
+                        else {
+
+                            if(_.isUndefined(result)){
+                                result = true;
+                            }
+
+                            self.toStream(JSON.stringify({
+                                "jsonrpc": "2.0",
+                                "id": request.id,
+                                "result": result
+                            }));
+                        }
+                    }
+                }
+                catch(Error){
+                    console.error(Error);
+                    var error = ERRORS.INTERNAL_ERROR;
+                    error.data = Error.message;
+
+                    self.toStream(JSON.stringify({
+                        "jsonrpc": "2.0",
+                        "id": request.id,
+                        "error": error
+                    }));
+                    return Promise.reject(ERRORS.INTERNAL_ERROR);
+                }
+            }
+            else {
+                self.toStream(JSON.stringify({
+                    "jsonrpc": "2.0",
+                    "id": request.id,
+                    "error": setError(ERRORS.METHOD_NOT_FOUND, {
+                        message: request.method
+                    })
+                }));
+                return ERRORS.METHOD_NOT_FOUND;
+            }
+        }
+
         self.toStream = function(a){
             console.log(arguments);
         };
@@ -264,7 +277,7 @@
             });
         };
 
-        self.callNotification = function(method, params){
+        self.notification = function(method, params){
             var message = {
                 "jsonrpc": "2.0",
                 "method": method,
@@ -278,17 +291,23 @@
             self.toStream(JSON.stringify(message));
         };
 
+        self.batch = function(calls){
+
+        };
+
         self.messageHandler = function(rawMessage){
             try {
                 var message = JSON.parse(rawMessage);
                 resolver(message);
             }
             catch (e) {
-                console.log(e);
+                console.log("messageHandler: ", e);
                 self.toStream(JSON.stringify({
+                    "id": null,
                     "jsonrpc": "2.0",
                     "error": ERRORS.PARSE_ERROR
                 }));
+                return Promise.reject(ERRORS.PARSE_ERROR);
             }
         };
     };

@@ -86,7 +86,7 @@ describe('Request object', function(){
 
     });
 
-    describe('@callNotification', function(){
+    describe('@notification', function(){
 
         it('should be generate valid message', function(done){
             var inputMessage;
@@ -99,7 +99,7 @@ describe('Request object', function(){
                 expect(inputJson).to.not.have.ownProperty('id');
                 done();
             };
-            JsonRpc.callNotification('add', [2,3]);
+            JsonRpc.notification('add', [2,3]);
         });
 
         it('should be without params', function(done){
@@ -110,7 +110,7 @@ describe('Request object', function(){
                 expect(inputJson).to.not.have.ownProperty('params');
                 done();
             };
-            JsonRpc.callNotification('createA');
+            JsonRpc.notification('createA');
         });
 
         it('should be by-position params', function(done){
@@ -124,7 +124,7 @@ describe('Request object', function(){
                 done();
             };
 
-            JsonRpc.callNotification('createA', ['A', 2+3, {foo: "bar"}]);
+            JsonRpc.notification('createA', ['A', 2+3, {foo: "bar"}]);
         });
 
         it('should be by-name params', function(done){
@@ -145,7 +145,7 @@ describe('Request object', function(){
                 done();
             };
 
-            JsonRpc.callNotification('createA', params);
+            JsonRpc.notification('createA', params);
         });
     });
 
@@ -327,6 +327,8 @@ describe('Response object', function () {
                return;
             });
 
+            var count = 0;
+
             JsonRpc.toStream = function(message){
                 inputJson = JSON.parse(message);
                 expect(inputJson).to.have.ownProperty('jsonrpc');
@@ -337,7 +339,7 @@ describe('Response object', function () {
                 done();
             };
 
-            JsonRpc.messageHandler('{"jsonrpc": "2.0", "id":44, "method": "delete", "params": {"id": 7}}');
+            JsonRpc.messageHandler('{"jsonrpc": "2.0", "id":445, "method": "delete", "params": {"id": 7}}');
         });
 
         it('Named params. should be contained "Invalid params" the error property and not contained the result property', function(done){
@@ -358,26 +360,6 @@ describe('Response object', function () {
             };
 
             JsonRpc.messageHandler('{"jsonrpc": "2.0", "id":44, "method": "delete", "params": {"id": 7}}');
-        });
-
-        it('Position params. should be contained "Invalid params" the error property and not contained the result property', function(done){
-            var inputJson;
-
-            JsonRpc.dispatch('delete', function(){
-                return true;
-            });
-
-            JsonRpc.toStream = function(message){
-                inputJson = JSON.parse(message);
-                expect(inputJson).to.have.ownProperty('jsonrpc');
-                expect(inputJson).to.have.ownProperty('id');
-                expect(inputJson).to.have.ownProperty('error');
-                expect(inputJson.error.code).to.have.equal(ERRORS.INVALID_PARAMS);
-                expect(inputJson).to.not.have.ownProperty('result');
-                done();
-            };
-
-            JsonRpc.messageHandler('{"jsonrpc": "2.0", "id":44, "method": "delete", "params": [7]}');
         });
 
         it('should be contained the internal error property and not contained the result property', function(done){
@@ -406,7 +388,7 @@ describe('Response object', function () {
             var inputJson;
 
             JsonRpc.dispatch('delete', function(index){
-                return Promise.reject('3.14159265zdec');
+                return Promise.reject('3.14159265' + index);
             });
 
             JsonRpc.toStream = function(message){
@@ -420,7 +402,7 @@ describe('Response object', function () {
                 done();
             };
 
-            JsonRpc.messageHandler('{"jsonrpc": "2.0", "id":44, "method": "delete", "params": [7]}');
+            JsonRpc.messageHandler('{"jsonrpc": "2.0", "id":444, "method": "delete", "params": ["zdec"]}');
         });
 
     });
