@@ -1,6 +1,6 @@
 {
   "name": "simple-jsonrpc-js",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "simple-jsonrpc client/server",
   "main": "index.js",
   "scripts": {
