@@ -443,6 +443,54 @@ describe('Response object', function () {
             JsonRpc.messageHandler('{"jsonrpc": "2.0", "id":444, "method": "delete", "params": ["zdec"]}');
         });
 
+        it('should be contained the custom error property and not contained the result property', function(done){
+            var inputJson;
+
+            JsonRpc.dispatch('delete', function(index){
+                throw JsonRpc.customException(-32001, "Utm offline");
+                return Promise.reject('3.14159265' + index);
+            });
+
+            JsonRpc.toStream = function(message){
+                inputJson = JSON.parse(message);
+                expect(inputJson).to.have.ownProperty('jsonrpc');
+                expect(inputJson).to.have.ownProperty('id');
+                expect(inputJson).to.have.ownProperty('error');
+                expect(inputJson.error).to.not.have.ownProperty('data');
+                expect(inputJson.error.code).to.have.equal(-32001);
+                expect(inputJson).to.not.have.ownProperty('result');
+                done();
+            };
+
+            JsonRpc.messageHandler('{"jsonrpc": "2.0", "id":444, "method": "delete", "params": ["zdec"]}');
+        });
+
+
+        it('should be contained data property in the custom error', function(done){
+            var inputJson;
+
+            JsonRpc.dispatch('delete', function(index){
+                throw JsonRpc.customException(-32001, "Utm offline", "504 Gateway Timeout");
+                return Promise.reject('3.14159265' + index);
+            });
+
+            JsonRpc.toStream = function(message){
+                inputJson = JSON.parse(message);
+                console.log("###_###");
+                console.log(message);
+                console.log("###_###");
+                expect(inputJson).to.have.ownProperty('jsonrpc');
+                expect(inputJson).to.have.ownProperty('id');
+                expect(inputJson).to.have.ownProperty('error');
+                expect(inputJson.error).to.have.ownProperty('data');
+                expect(inputJson.error.code).to.have.equal(-32001);
+                expect(inputJson).to.not.have.ownProperty('result');
+                done();
+            };
+
+            JsonRpc.messageHandler('{"jsonrpc": "2.0", "id":4445, "method": "delete", "params": ["zdec"]}');
+        });
+
     });
 
     describe('Batch', function(){

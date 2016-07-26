@@ -33,6 +33,19 @@
             }
         };
 
+
+
+        function ServerError(code, message, data){
+            this.message = message || "";
+            this.code = code || -32000;
+            
+            if(Boolean(data)){
+                this.data = data;
+            }
+        }
+        
+        ServerError.prototype = new Error();
+
         var self = this,
             waitingframe = {},
             id = 0,
@@ -47,6 +60,16 @@
                 }
                 else if(_.isString(exception)){
                     error.data = exception;
+                }
+
+                if(exception instanceof ServerError){
+                    error = {
+                        message: exception.message,
+                        code: exception.code
+                    };
+                    if(exception.hasOwnProperty('data')){
+                        error.data = exception.data;
+                    }
                 }
             }
             return error;
@@ -356,6 +379,10 @@
                     "error": ERRORS.PARSE_ERROR
                 }));
             }
+        };
+
+        self.customException = function(code, message, data){
+            return new ServerError(code, message, data);
         };
     };
 
