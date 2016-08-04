@@ -1,6 +1,6 @@
 {
   "name": "simple-jsonrpc-js",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "simple-jsonrpc client/server",
   "main": "index.js",
   "scripts": {
@@ -23,6 +23,8 @@
   "homepage": "http://future_home_page.org/dev/simple-jsonrpc-js",
   "devDependencies": {
     "chai": "^3.5.0",
+    "gulp-header": "^1.8.7",
+    "gulp-webserver": "^0.9.1",
     "mocha": "^2.5.3"
   }
 }
