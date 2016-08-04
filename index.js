@@ -1,2 +1,1 @@
-require('./simple-jsonrpc-js');
-module.exports = simple_jsonrpc;
+module.exports = require('./simple-jsonrpc-js');
