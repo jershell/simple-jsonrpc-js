@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Rpc example</title>
+    <script type="application/javascript" src="/bower_components/lodash/lodash.js"></script>
+    <script type="application/javascript" src="../../simple-jsonrpc-js.js"></script>
+</head>
+
+<body>
+<h1 class="title"></h1>
+<p class="paragraph"></p>
+    <script>
+        //configure
+        var jrpc = new simple_jsonrpc();
+        var socket = new WebSocket("ws://localhost:8090");
+
+        //wait of call
+        jrpc.dispatch('view.setTitle', function(title){
+            document.getElementsByClassName('title')[0].innerHTML = title;
+        });
+
+        socket.onmessage = function(event){
+            jrpc.messageHandler(event.data);
+        };
+
+        jrpc.toStream = function(_msg) {
+            socket.send(_msg);
+        };
+
+        socket.onerror = function(error) {
+            console.error("Error: " + error.message);
+        };
+
+        socket.onclose = function(event) {
+            if (event.wasClean) {
+                console.info('Connection close was clean');
+            }
+            else {
+                console.error('Connection suddenly close');
+            }
+            console.info('close code : ' + event.code + ' reason: ' + event.reason);
+        };
+
+        //usage
+        //after connect
+        socket.onopen = function(){
+
+            //calls
+            jrpc.call('add', [2, 3]).then(function (result) {
+                document.getElementsByClassName('paragraph')[0].innerHTML += 'add(2, 3) result: ' + result + '<br>';
+            });
+
+            jrpc.call('mul', {y: 3, x: 2}).then(function (result) {
+                document.getElementsByClassName('paragraph')[0].innerHTML += 'mul(2, 3) result: ' + result + '<br>';
+            });
+        };
+
+    </script>
+</body>
+
+</html>

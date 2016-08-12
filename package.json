@@ -13,7 +13,9 @@
   "keywords": [
     "jsonrpc",
     "websocket",
-    "client-side"
+    "client-side",
+    "api",
+    ""
   ],
   "author": "QuickResto Frontend Team <jershell@mail.ru>",
   "license": "MIT",
