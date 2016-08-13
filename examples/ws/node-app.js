@@ -32,6 +32,14 @@ var webSocketServer = new WebSocketServer.Server({
         return x*y;
     });
 
+    var item_id = 120;
+
+    jrpc.dispatch('create', ['item', 'rewrite'], function(item, rewrite){
+        item_id ++;
+        item.id = item_id;
+        return item;
+    });
+
     jrpc.call('view.setTitle', [title]);
 
 });

@@ -1,13 +1,19 @@
-(function(undefined) {
+(function(root, Promise) {
     'use strict';
+    /*
+        name: simple-jsonrpc-js
+        version: 0.0.5
+    */
     var _;
-    if(typeof _ === "undefined" && typeof require !== "undefined"){
-        _ = require('lodash');
+    if(typeof _ === "undefined"){
+        if(typeof require !== "undefined"){
+             _ = require('lodash');
+        }
+        else if(root._){
+             _  = root._;
+        }
     }
-    else if(typeof _ === "undefined" && typeof window._ !== "undefined"){
-        _ = window._;
-    }
-  
+
     var simple_jsonrpc = function(){
 
         var ERRORS = {
@@ -310,7 +316,9 @@
         }
 
         self.toStream = function(a){
+            console.log('Need define the toStream method for use');
             console.log(arguments);
+
         };
 
         self.dispatch = function(functionName, paramsNameFn, fn) {
@@ -386,20 +394,19 @@
         };
     };
 
-    var result = simple_jsonrpc;
 
     if (typeof define == 'function' && define.amd) {
         define('simple_jsonrpc', [], function() {
-            return result;
+            return simple_jsonrpc;
         });
     }
     else if(typeof module !== "undefined" && typeof module.exports !== "undefined" ){
-        module.exports = result;
+        module.exports = simple_jsonrpc;
     }
-    else if(typeof window !== "undefined"){
-        window.simple_jsonrpc = result;
+    else if(typeof root !== "undefined"){
+        root.simple_jsonrpc = simple_jsonrpc;
     }
     else {
-        return result;
+        return simple_jsonrpc;
     }
-})();
+})(this, this.Promise || global.Promise || require('promise-polyfill'));

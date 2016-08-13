@@ -1,7 +1,7 @@
 {
   "name": "simple-jsonrpc-js",
-  "version": "0.0.4",
-  "description": "simple-jsonrpc client/server",
+  "version": "0.0.5",
+  "description": "simple jsonrpc client/server handler",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -22,12 +22,15 @@
   "bugs": {
     "url": "https://github.com/jershell/simple-jsonrpc-js/issues"
   },
-  "homepage": "http://future_home_page.org/dev/simple-jsonrpc-js",
+  "homepage": "https://github.com/jershell/simple-jsonrpc-js",
   "devDependencies": {
     "chai": "^3.5.0",
     "gulp-header": "^1.8.7",
+    "gulp-rename": "^1.2.2",
+    "gulp-uglify": "^2.0.0",
     "gulp-webserver": "^0.9.1",
-    "mocha": "^2.5.3"
+    "mocha": "^2.5.3",
+    "ws": "^1.1.1"
   },
   "dependencies": {
     "lodash": "^4.15.0"

@@ -6,17 +6,17 @@
  + Support websocket and http.
  + Full support json-rpc 2.0
 
-
 ## Installing
 
 You can install this package either with
 
-```bower install simple-jsonrpc-js```   *on webclient*  
+```bower install simple-jsonrpc-js```   *# on webclient*  
 ***or***   
-```npm install simple-jsonrpc-js```     *on nodejs*
+```npm install simple-jsonrpc-js```     *# on nodejs*
 
 
-## Usage (over WebSocket) on server
+## Usage
+(over WebSocket) on server:
 ```js
 
 function add(x, y){
@@ -46,6 +46,14 @@ var webSocketServer = new WebSocketServer.Server({
 
     jrpc.dispatch('mul', ['x', 'y'], function(x, y){
         return x*y;
+    });
+
+    var item_id = 120;
+
+    jrpc.dispatch('create', ['item', 'rewrite'], function(item, rewrite){
+        item_id ++;
+        item.id = item_id;
+        return item;
     });
 
     jrpc.call('view.setTitle', ["JSONRPC over ws"]);
@@ -98,6 +106,12 @@ And on client:
             jrpc.call('mul', {y: 3, x: 2}).then(function (result) {
                 document.getElementsByClassName('paragraph')[0].innerHTML += 'mul(2, 3) result: ' + result + '<br>';
             });
+
+            jrpc.batch([
+                {call:{method: "add", params: [5,2]}},
+                {call:{method: "mul", params: [100, 200]}},
+                {call:{method: "create", params: {item: {foo: "bar"}, rewrite: true}}}
+            ]);
         };
 ```
 
@@ -120,3 +134,14 @@ More examples in directory
 ```messageHandler(rawMessage)``` -  All incoming messages must be passed as a parameter  
 
 ```toStream```  - The property, a function pointer. It is necessary to determine before use. Will be called for send a message to the remote host  
+
+
+## Dependecies
+ + nodejs <= 4
+ + lodash
+ + [promise-polyfill](https://github.com/taylorhakes/promise-polyfill) for old versions nodejs and browsers
+
+
+## Specification
+
+http://www.jsonrpc.org/specification

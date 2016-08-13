@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Rpc example</title>
     <script type="application/javascript" src="/bower_components/lodash/lodash.js"></script>
-    <script type="application/javascript" src="../../simple-jsonrpc-js.js"></script>
+    <script type="application/javascript" src="../../dist/simple-jsonrpc-js.min.js"></script>
 </head>
 
 <body>
@@ -54,6 +54,12 @@
             jrpc.call('mul', {y: 3, x: 2}).then(function (result) {
                 document.getElementsByClassName('paragraph')[0].innerHTML += 'mul(2, 3) result: ' + result + '<br>';
             });
+
+            jrpc.batch([
+                {call:{method: "add", params: [5,2]}},
+                {call:{method: "mul", params: [100, 200]}},
+                {call:{method: "create", params: {item: {foo: "bar"}, rewrite: true}}}
+            ]);
         };
 
     </script>

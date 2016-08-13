@@ -1,10 +1,11 @@
 {
   "name": "simple-jsonrpc-js",
-  "version": "0.0.4",
+  "description": "simple jsonrpc client/server handler",
+  "version": "0.0.5",
   "license": "MIT",
-  "main": "./simple-jsonrpc-js.js",
+  "main": "./dist/simple-jsonrpc-js.min.js",
   "ignore": [],
   "dependencies": {
-    "lodash": "4.13.1"
+    "lodash": "4.15.0"
   }
 }
