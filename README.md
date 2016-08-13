@@ -106,11 +106,17 @@ More examples in directory
 ## API
 
 ```call(methodName, params)``` - Remote method invocation. Returned `promise` object.  
-```notification(methodName, params)``` - Remote method invocation without response object  
-```batch(calls)``` - batch invocation. Returned `promise` object.
-```dispatch(methodName, paramsName, handler)``` - Registration local method for incommig invocation
-```customException(code, message, data)``` - return exception with implementation-defined server-errors  
 
-configuration:  
+```notification(methodName, params)``` - Remote method invocation without response object  
+
+```batch(calls)``` - batch invocation. Returned `promise` object.  
+
+```dispatch(methodName, paramsName, handler)``` - Registration local method for incommig invocation  
+
+```customException(code, message, data)``` - return exception with implementation-defined server-errors    
+
+***configuration:***  
+
 ```messageHandler(rawMessage)``` -  All incoming messages must be passed as a parameter  
-```toStream```  - The property, a function pointer. It is necessary to determine before use. Will be called for send a message to the remote host
+
+```toStream```  - The property, a function pointer. It is necessary to determine before use. Will be called for send a message to the remote host  
