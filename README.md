@@ -1,17 +1,20 @@
 # simple-jsonrpc-js
 
+*Need your help for translation the description to english*
+
  + Client and server.
- + Support websocket and http. 
+ + Support websocket and http.
  + Full support json-rpc 2.0
 
 
 ## Installing
 
-You can install this package either with 
+You can install this package either with
 
-```bower install simple-jsonrpc-js``` 
-or 
-```npm install simple-jsonrpc-js``` 
+```bower install simple-jsonrpc-js```   *on webclient*  
+***or***   
+```npm install simple-jsonrpc-js```     *on nodejs*
+
 
 ## Usage (over WebSocket) on server
 ```js
@@ -30,7 +33,7 @@ var webSocketServer = new WebSocketServer.Server({
 }).on('connection', function(ws) {
     var jrpc = new JsonRPC();
     ws.jrpc = jrpc;
-    
+
     ws.jrpc.toStream = function(message){
         ws.send(message);
     };
@@ -40,7 +43,7 @@ var webSocketServer = new WebSocketServer.Server({
     });
 
     jrpc.dispatch('add', ['x', 'y'], add);
-    
+
     jrpc.dispatch('mul', ['x', 'y'], function(x, y){
         return x*y;
     });
@@ -102,16 +105,12 @@ More examples in directory
 
 ## API
 
-```call(methodName, params)``` - call remote procedure
-```notification(methodName, params)``` - call remote without response object
-```batch(calls)``` - batch calls
-```dispatch(methodName, paramsName, handler)``` - Registration method 
-```customException(code, message, data)``` - return exception with implementation-defined server-errors
+```call(methodName, params)``` - Remote method invocation. Returned `promise` object.  
+```notification(methodName, params)``` - Remote method invocation without response object  
+```batch(calls)``` - batch invocation. Returned `promise` object.
+```dispatch(methodName, paramsName, handler)``` - Registration local method for incommig invocation
+```customException(code, message, data)``` - return exception with implementation-defined server-errors  
 
-configuration:
-```messageHandler(rawMessage)``` - 
-```toStream(toRemoteService)```
-
-
-
-
+configuration:  
+```messageHandler(rawMessage)``` -  All incoming messages must be passed as a parameter  
+```toStream```  - The property, a function pointer. It is necessary to determine before use. Will be called for send a message to the remote host
