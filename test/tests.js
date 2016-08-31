@@ -220,6 +220,45 @@ describe('Response object', function () {
             JsonRpc = new simple_jsonrpc();
         });
 
+        it('Incoming call. The messageHandler(raw valid message) should be return resolved Promise', function(done){
+            JsonRpc.dispatch('add', function(x, y){
+                return x+y;
+            });
+
+            var inputJson;
+
+            JsonRpc.toStream = function(message){
+                inputJson = JSON.parse(message);
+                expect(inputJson).to.have.ownProperty('id');
+                expect(inputJson).to.have.ownProperty('jsonrpc');
+                expect(inputJson).to.have.ownProperty('result');
+                expect(inputJson).to.not.have.ownProperty('error');
+            };
+
+            JsonRpc.messageHandler('{"jsonrpc": "2.0", "id": 2, "method": "add", "params": [32, 48]}')
+                .then(function(result){
+                    console.log('messageHandler->', result);
+                    done();
+                });
+        });
+
+        it('Incoming call. The messageHandler(raw invalid message) should be return resolved Promise', function(done){
+
+
+            var inputJson;
+
+            JsonRpc.toStream = function(message){
+                inputJson = JSON.parse(message);
+                done(message);
+            };
+
+            JsonRpc.messageHandler('{"jsonrpc": "2.0", "id": 202, "result": "88"}')
+                .then(function(result){
+                    console.log('messageHandler->', result);
+                    done();
+                });
+        });
+
         it('Incoming call. Positional parameters. Should be return object with result, id, jsonrpc properties', function(done){
             JsonRpc.dispatch('add', function(x, y){
                 return x+y;

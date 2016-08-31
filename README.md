@@ -131,7 +131,7 @@ More examples in directory
 
 ***configuration:***  
 
-```messageHandler(rawMessage)``` -  All incoming messages must be passed as a parameter  
+```messageHandler(rawMessage)``` -  All incoming messages must be passed as a parameter.  Returned `promise` object. 
 
 ```toStream```  - The property, a function pointer. It is necessary to determine before use. Will be called for send a message to the remote host  
 

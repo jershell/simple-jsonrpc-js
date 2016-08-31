@@ -103,14 +103,13 @@
 
                 _.each(message, function (msg) {
                     promises.push(resolver(msg));
-
                 });
             }
             else if (_.isObject(message)) {
                 promises.push(resolver(message));
             }
 
-            Promise.all(promises)
+            return Promise.all(promises)
                 .then(function (result) {
 
                     var toStream = [];
@@ -126,6 +125,7 @@
                     else if (toStream.length > 1) {
                         self.toStream(JSON.stringify(toStream));
                     }
+                    return result;
                 });
         }
 
@@ -150,13 +150,13 @@
             }
             catch (e) {
                 console.error('Resolver error:' + e.message, e);
+                return Promise.reject(e);
             }
         }
 
         function rejectRequest(error){
             if(waitingframe.hasOwnProperty(error.id)){
                 waitingframe[error.id].reject(error.error);
-                delete waitingframe[error.id];
             }
             else {
                 console.log('Unknown request', error);
@@ -169,7 +169,7 @@
                 delete waitingframe[result.id];
             }
             else {
-                console.log('unknown request');
+                console.log('unknown request', result);
             }
         }
 
@@ -282,7 +282,7 @@
             var message = {
                 "jsonrpc": "2.0",
                 "method": method,
-                "params": params,
+                "params": params
             };
 
             if(_.isObject(params) && !_.isEmpty(params)){
@@ -312,13 +312,12 @@
                     };
                 }),
                 message: message
-            }
+            };
         }
 
         self.toStream = function(a){
-            console.log('Need define the toStream method for use');
+            console.log('Need define the toStream method before use');
             console.log(arguments);
-
         };
 
         self.dispatch = function(functionName, paramsNameFn, fn) {
@@ -358,7 +357,7 @@
                 if(req.hasOwnProperty('call')){
                     var _call = call(req.call.method, req.call.params);
                     message.push(_call.message);
-                    //TODO(jershell): batch reject if one promise reject, so catch reject and resolve error;
+                    //TODO(jershell): batch reject if one promise reject, so catch reject and resolve error as result;
                     promises.push(_call.promise.then(function(res){
                         return res;
                     }, function(err){
@@ -377,7 +376,7 @@
         self.messageHandler = function(rawMessage){
             try {
                 var message = JSON.parse(rawMessage);
-                beforeResolve(message);
+                return beforeResolve(message);
             }
             catch (e) {
                 console.log("Error in messageHandler(): ", e);
@@ -386,6 +385,7 @@
                     "jsonrpc": "2.0",
                     "error": ERRORS.PARSE_ERROR
                 }));
+                return Promise.reject(e);
             }
         };
 
