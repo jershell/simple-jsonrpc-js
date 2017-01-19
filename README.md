@@ -137,7 +137,7 @@ More examples in directory
 
 
 ## Dependecies
- + nodejs <= 4
+ + nodejs <= 4 || latest browser
  + lodash
  + [promise-polyfill](https://github.com/taylorhakes/promise-polyfill) for old versions nodejs and browsers
 

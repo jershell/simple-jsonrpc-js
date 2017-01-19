@@ -1,10 +1,11 @@
-(function(root, Promise) {
+(function(root) {
     'use strict';
     /*
         name: simple-jsonrpc-js
-        version: 0.0.5
+        version: 0.0.7
     */
-    var _;
+    var _, _Promise;
+
     if(typeof _ === "undefined"){
         if(typeof require !== "undefined"){
              _ = require('lodash');
@@ -14,43 +15,66 @@
         }
     }
 
-    var simple_jsonrpc = function(){
+    if(Promise){
+        _Promise = Promise;
+    } else {
+        throw 'Promise is not supported! Use latest version node/browser or promise-polyfill';
+    }
 
-        var ERRORS = {
-            "PARSE_ERROR": {
-                "code": -32700,
-                "message": "Invalid JSON was received by the server. An error occurred on the server while parsing the JSON text."
-            },
-            "INVALID_REQUEST": {
-                "code": -32600,
-                "message": "Invalid Request. The JSON sent is not a valid Request object."
-            },
-            "METHOD_NOT_FOUND": {
-                "code": -32601,
-                "message": "Method not found. The method does not exist / is not available."
-            },
-            "INVALID_PARAMS": {
-                "code": -32602,
-                "message": "Invalid params. Invalid method parameter(s)."
-            },
-            "INTERNAL_ERROR": {
-                "code": -32603,
-                "message": "Internal error. Internal JSON-RPC error."
-            }
-        };
+    var isObject = function (value) {
+        const type = typeof value;
+        return value != null && (type == 'object' || type == 'function');
+    };
 
+    var isUndefined = function (value) {
+        return value === undefined;
+    };
+    
+    var isArray = Array.isArray;
+    
+    var isFunction = function(target){
+      return typeof target === 'function'
+    };
 
-
-        function ServerError(code, message, data){
-            this.message = message || "";
-            this.code = code || -32000;
-            
-            if(Boolean(data)){
-                this.data = data;
-            }
+    var isString = function(){
+        return typeof value === 'string';
+    };
+    
+    var ERRORS = {
+        "PARSE_ERROR": {
+            "code": -32700,
+            "message": "Invalid JSON was received by the server. An error occurred on the server while parsing the JSON text."
+        },
+        "INVALID_REQUEST": {
+            "code": -32600,
+            "message": "Invalid Request. The JSON sent is not a valid Request object."
+        },
+        "METHOD_NOT_FOUND": {
+            "code": -32601,
+            "message": "Method not found. The method does not exist / is not available."
+        },
+        "INVALID_PARAMS": {
+            "code": -32602,
+            "message": "Invalid params. Invalid method parameter(s)."
+        },
+        "INTERNAL_ERROR": {
+            "code": -32603,
+            "message": "Internal error. Internal JSON-RPC error."
         }
-        
-        ServerError.prototype = new Error();
+    };
+
+    function ServerError(code, message, data){
+        this.message = message || "";
+        this.code = code || -32000;
+
+        if(Boolean(data)){
+            this.data = data;
+        }
+    }
+
+    ServerError.prototype = new Error();
+
+    var simple_jsonrpc = function(){
 
         var self = this,
             waitingframe = {},
@@ -61,10 +85,10 @@
         function setError(jsonrpcError, exception){
             var error = _.clone(jsonrpcError);
             if(!!exception){
-                if(_.isObject(exception) && exception.hasOwnProperty("message")) {
+                if(isObject(exception) && exception.hasOwnProperty("message")) {
                     error.data = exception.message;
                 }
-                else if(_.isString(exception)){
+                else if(isString(exception)){
                     error.data = exception;
                 }
 
@@ -99,22 +123,22 @@
 
         function beforeResolve(message) {
             var promises = [];
-            if (_.isArray(message)) {
+            if (isArray(message)) {
 
                 _.each(message, function (msg) {
                     promises.push(resolver(msg));
                 });
             }
-            else if (_.isObject(message)) {
+            else if (isObject(message)) {
                 promises.push(resolver(message));
             }
 
-            return Promise.all(promises)
+            return _Promise.all(promises)
                 .then(function (result) {
 
                     var toStream = [];
                     _.each(result, function (r) {
-                        if (!_.isUndefined(r)) {
+                        if (!isUndefined(r)) {
                             toStream.push(r);
                         }
                     });
@@ -141,7 +165,7 @@
                     return handleRemoteRequest(message);
                 }
                 else {
-                    return Promise.resolve({
+                    return _Promise.resolve({
                         "id": null,
                         "jsonrpc": "2.0",
                         "error": setError(ERRORS.INVALID_REQUEST)
@@ -150,7 +174,7 @@
             }
             catch (e) {
                 console.error('Resolver error:' + e.message, e);
-                return Promise.reject(e);
+                return _Promise.reject(e);
             }
         }
 
@@ -179,10 +203,10 @@
                     var result;
 
                     if (request.hasOwnProperty('params')) {
-                        if(_.isArray(request.params)){
+                        if(isArray(request.params)){
                             result = dispatcher[request.method].fn.apply(dispatcher, request.params);
                         }
-                        else if(_.isObject(request.params)){
+                        else if(isObject(request.params)){
                             if(dispatcher[request.method].params instanceof Array){
                                 var argsValues = [];
                                 dispatcher[request.method].params.forEach(function (arg) {
@@ -197,7 +221,7 @@
                                 });
 
                                 if(Object.keys(request.params).length > 0){
-                                    return Promise.resolve({
+                                    return _Promise.resolve({
                                         "jsonrpc": "2.0",
                                         "id": request.id,
                                         "error": setError(ERRORS.INVALID_PARAMS, {
@@ -210,7 +234,7 @@
                                 }
                             }
                             else {
-                                return Promise.resolve({
+                                return _Promise.resolve({
                                     "jsonrpc": "2.0",
                                     "id": request.id,
                                     "error": setError(ERRORS.INVALID_PARAMS, "Undeclared arguments of the method " + request.method)
@@ -225,7 +249,7 @@
                     if(request.hasOwnProperty('id')){
                         if (isPromise(result)) {
                             return result.then(function (res) {
-                                    if(_.isUndefined(res)){
+                                    if(isUndefined(res)){
                                         res = true;
                                     }
                                     return {
@@ -244,11 +268,11 @@
                         }
                         else {
 
-                            if(_.isUndefined(result)){
+                            if(isUndefined(result)){
                                 result = true;
                             }
 
-                            return Promise.resolve({
+                            return _Promise.resolve({
                                 "jsonrpc": "2.0",
                                 "id": request.id,
                                 "result": result
@@ -256,11 +280,11 @@
                         }
                     }
                     else {
-                        return Promise.resolve(); //nothing, it notification
+                        return _Promise.resolve(); //nothing, it notification
                     }
                 }
                 catch(e){
-                    return Promise.resolve({
+                    return _Promise.resolve({
                         "jsonrpc": "2.0",
                         "id": request.id,
                         "error": setError(ERRORS.INTERNAL_ERROR, e)
@@ -268,7 +292,7 @@
                 }
             }
             else {
-                return Promise.resolve({
+                return _Promise.resolve({
                     "jsonrpc": "2.0",
                     "id": request.id,
                     "error": setError(ERRORS.METHOD_NOT_FOUND, {
@@ -285,7 +309,7 @@
                 "params": params
             };
 
-            if(_.isObject(params) && !_.isEmpty(params)){
+            if(isObject(params) && !_.isEmpty(params)){
                 message.params = params;
             }
 
@@ -300,12 +324,12 @@
                 "id": id
             };
 
-            if(_.isObject(params) && !_.isEmpty(params)){
+            if(isObject(params) && !_.isEmpty(params)){
                 message.params = params;
             }
 
             return {
-                promise: new Promise(function(resolve, reject){
+                promise: new _Promise(function(resolve, reject){
                     waitingframe[id.toString()] = {
                         resolve: resolve,
                         reject: reject
@@ -322,13 +346,13 @@
 
         self.dispatch = function(functionName, paramsNameFn, fn) {
 
-            if(_.isString(functionName) && _.isArray(paramsNameFn) && _.isFunction(fn)){
+            if(isString(functionName) && isArray(paramsNameFn) && isFunction(fn)){
                 dispatcher[functionName] = {
                     fn: fn,
                     params: paramsNameFn
                 };
             }
-            else if(_.isString(functionName) && _.isFunction(paramsNameFn) && _.isUndefined(fn)){
+            else if(isString(functionName) && isFunction(paramsNameFn) && isUndefined(fn)){
                 dispatcher[functionName] = {
                     fn: paramsNameFn,
                     params: null
@@ -370,7 +394,7 @@
             });
 
             self.toStream(JSON.stringify(message));
-            return Promise.all(promises);
+            return _Promise.all(promises);
         };
 
         self.messageHandler = function(rawMessage){
@@ -385,7 +409,7 @@
                     "jsonrpc": "2.0",
                     "error": ERRORS.PARSE_ERROR
                 }));
-                return Promise.reject(e);
+                return _Promise.reject(e);
             }
         };
 
@@ -393,7 +417,6 @@
             return new ServerError(code, message, data);
         };
     };
-
 
     if (typeof define == 'function' && define.amd) {
         define('simple_jsonrpc', [], function() {
@@ -409,4 +432,4 @@
     else {
         return simple_jsonrpc;
     }
-})(this, this.Promise || global.Promise || require('promise-polyfill'));
+})(this);
