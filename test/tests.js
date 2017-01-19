@@ -1,3 +1,12 @@
+if (typeof require !== 'undefined') {
+    var chai = require('chai');
+    chai.should();
+    var simple_jsonrpc = require('../simple-jsonrpc-js');
+}
+
+var assert = chai.assert;
+var expect = chai.expect;
+
 describe('Request object', function(){
 
     var JsonRpc;
@@ -15,9 +24,9 @@ describe('Request object', function(){
 
     describe('@call', function(){
 
-        it('should be generate valid message', function(done){
+        it('should be generate valid message', function (done) {
             var inputJson;
-            JsonRpc.toStream = function(message){
+            JsonRpc.toStream = function (message) {
                 inputJson = JSON.parse(message);
 
                 expect(inputJson).to.have.ownProperty('jsonrpc');
@@ -26,7 +35,7 @@ describe('Request object', function(){
                 expect(inputJson).to.have.ownProperty('id');
                 done();
             };
-            JsonRpc.call('add', [2,3]);
+            JsonRpc.call('add', [2, 3]);
         });
 
         it('should be increment index', function(){

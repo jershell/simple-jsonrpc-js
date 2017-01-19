@@ -1,45 +1,70 @@
-(function(root) {
+(function (root) {
     'use strict';
     /*
-        name: simple-jsonrpc-js
-        version: 0.0.7
-    */
-    var _, _Promise;
+     name: simple-jsonrpc-js
+     version: 0.0.7
+     */
+    var _Promise = Promise;
 
-    if(typeof _ === "undefined"){
-        if(typeof require !== "undefined"){
-             _ = require('lodash');
-        }
-        else if(root._){
-             _  = root._;
-        }
+    if (typeof _Promise === 'undefined') {
+        _Promise = root.Promise;
     }
 
-    if(Promise){
-        _Promise = Promise;
-    } else {
+    if (_Promise === undefined) {
         throw 'Promise is not supported! Use latest version node/browser or promise-polyfill';
     }
+
+    var isUndefined = function (value) {
+        return value === undefined;
+    };
+
+    var isArray = Array.isArray;
 
     var isObject = function (value) {
         const type = typeof value;
         return value != null && (type == 'object' || type == 'function');
     };
 
-    var isUndefined = function (value) {
-        return value === undefined;
-    };
-    
-    var isArray = Array.isArray;
-    
-    var isFunction = function(target){
-      return typeof target === 'function'
+    var isFunction = function (target) {
+        return typeof target === 'function'
     };
 
-    var isString = function(){
+    var isString = function (value) {
         return typeof value === 'string';
     };
-    
+
+    var isEmpty = function (value) {
+        if (isObject(value)) {
+            for (var idx in value) {
+                if (value.hasOwnProperty(idx)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        if (isArray(value)) {
+            return !value.length;
+        }
+        return !value;
+    };
+
+    var forEach = function (target, callback) {
+        if (isArray(target)) {
+            return target.map(callback);
+        }
+        else {
+            for (var _key in target) {
+                if (target.hasOwnProperty(_key)) {
+                    callback(target[_key]);
+                }
+            }
+        }
+    };
+
+    var clone = function (value) {
+        return JSON.parse(JSON.stringify(value));
+    };
+
     var ERRORS = {
         "PARSE_ERROR": {
             "code": -32700,
@@ -63,18 +88,18 @@
         }
     };
 
-    function ServerError(code, message, data){
+    function ServerError(code, message, data) {
         this.message = message || "";
         this.code = code || -32000;
 
-        if(Boolean(data)){
+        if (Boolean(data)) {
             this.data = data;
         }
     }
 
     ServerError.prototype = new Error();
 
-    var simple_jsonrpc = function(){
+    var simple_jsonrpc = function () {
 
         var self = this,
             waitingframe = {},
@@ -82,22 +107,22 @@
             dispatcher = {};
 
 
-        function setError(jsonrpcError, exception){
-            var error = _.clone(jsonrpcError);
-            if(!!exception){
-                if(isObject(exception) && exception.hasOwnProperty("message")) {
+        function setError(jsonrpcError, exception) {
+            var error = clone(jsonrpcError);
+            if (!!exception) {
+                if (isObject(exception) && exception.hasOwnProperty("message")) {
                     error.data = exception.message;
                 }
-                else if(isString(exception)){
+                else if (isString(exception)) {
                     error.data = exception;
                 }
 
-                if(exception instanceof ServerError){
+                if (exception instanceof ServerError) {
                     error = {
                         message: exception.message,
                         code: exception.code
                     };
-                    if(exception.hasOwnProperty('data')){
+                    if (exception.hasOwnProperty('data')) {
                         error.data = exception.data;
                     }
                 }
@@ -105,27 +130,26 @@
             return error;
         }
 
-        function isPromise(thing){
+        function isPromise(thing) {
             return !!thing && 'function' === typeof thing.then;
         }
 
-        function isError(message){
+        function isError(message) {
             return !!message.error;
         }
 
-        function isRequest(message){
+        function isRequest(message) {
             return !!message.method;
         }
 
-        function isResponse(message){
+        function isResponse(message) {
             return message.hasOwnProperty('result') && message.hasOwnProperty('id');
         }
 
         function beforeResolve(message) {
             var promises = [];
             if (isArray(message)) {
-
-                _.each(message, function (msg) {
+                forEach(message, function (msg) {
                     promises.push(resolver(msg));
                 });
             }
@@ -137,7 +161,7 @@
                 .then(function (result) {
 
                     var toStream = [];
-                    _.each(result, function (r) {
+                    forEach(result, function (r) {
                         if (!isUndefined(r)) {
                             toStream.push(r);
                         }
@@ -178,8 +202,8 @@
             }
         }
 
-        function rejectRequest(error){
-            if(waitingframe.hasOwnProperty(error.id)){
+        function rejectRequest(error) {
+            if (waitingframe.hasOwnProperty(error.id)) {
                 waitingframe[error.id].reject(error.error);
             }
             else {
@@ -187,8 +211,8 @@
             }
         }
 
-        function resolveRequest(result){
-            if(waitingframe.hasOwnProperty(result.id)) {
+        function resolveRequest(result) {
+            if (waitingframe.hasOwnProperty(result.id)) {
                 waitingframe[result.id].resolve(result.result);
                 delete waitingframe[result.id];
             }
@@ -197,17 +221,17 @@
             }
         }
 
-        function handleRemoteRequest(request){
-            if(dispatcher.hasOwnProperty(request.method)){
+        function handleRemoteRequest(request) {
+            if (dispatcher.hasOwnProperty(request.method)) {
                 try {
                     var result;
 
                     if (request.hasOwnProperty('params')) {
-                        if(isArray(request.params)){
+                        if (isArray(request.params)) {
                             result = dispatcher[request.method].fn.apply(dispatcher, request.params);
                         }
-                        else if(isObject(request.params)){
-                            if(dispatcher[request.method].params instanceof Array){
+                        else if (isObject(request.params)) {
+                            if (dispatcher[request.method].params instanceof Array) {
                                 var argsValues = [];
                                 dispatcher[request.method].params.forEach(function (arg) {
 
@@ -220,7 +244,7 @@
                                     }
                                 });
 
-                                if(Object.keys(request.params).length > 0){
+                                if (Object.keys(request.params).length > 0) {
                                     return _Promise.resolve({
                                         "jsonrpc": "2.0",
                                         "id": request.id,
@@ -246,18 +270,18 @@
                         result = dispatcher[request.method].fn();
                     }
 
-                    if(request.hasOwnProperty('id')){
+                    if (request.hasOwnProperty('id')) {
                         if (isPromise(result)) {
                             return result.then(function (res) {
-                                    if(isUndefined(res)){
-                                        res = true;
-                                    }
-                                    return {
-                                        "jsonrpc": "2.0",
-                                        "id": request.id,
-                                        "result": res
-                                    };
-                                })
+                                if (isUndefined(res)) {
+                                    res = true;
+                                }
+                                return {
+                                    "jsonrpc": "2.0",
+                                    "id": request.id,
+                                    "result": res
+                                };
+                            })
                                 .catch(function (e) {
                                     return {
                                         "jsonrpc": "2.0",
@@ -268,7 +292,7 @@
                         }
                         else {
 
-                            if(isUndefined(result)){
+                            if (isUndefined(result)) {
                                 result = true;
                             }
 
@@ -283,7 +307,7 @@
                         return _Promise.resolve(); //nothing, it notification
                     }
                 }
-                catch(e){
+                catch (e) {
                     return _Promise.resolve({
                         "jsonrpc": "2.0",
                         "id": request.id,
@@ -302,21 +326,21 @@
             }
         }
 
-        function notification(method, params){
+        function notification(method, params) {
             var message = {
                 "jsonrpc": "2.0",
                 "method": method,
                 "params": params
             };
 
-            if(isObject(params) && !_.isEmpty(params)){
+            if (isObject(params) && !isEmpty(params)) {
                 message.params = params;
             }
 
             return message;
         }
 
-        function call(method, params){
+        function call(method, params) {
             id += 1;
             var message = {
                 "jsonrpc": "2.0",
@@ -324,12 +348,12 @@
                 "id": id
             };
 
-            if(isObject(params) && !_.isEmpty(params)){
+            if (isObject(params) && !isEmpty(params)) {
                 message.params = params;
             }
 
             return {
-                promise: new _Promise(function(resolve, reject){
+                promise: new _Promise(function (resolve, reject) {
                     waitingframe[id.toString()] = {
                         resolve: resolve,
                         reject: reject
@@ -339,20 +363,20 @@
             };
         }
 
-        self.toStream = function(a){
+        self.toStream = function (a) {
             console.log('Need define the toStream method before use');
             console.log(arguments);
         };
 
-        self.dispatch = function(functionName, paramsNameFn, fn) {
+        self.dispatch = function (functionName, paramsNameFn, fn) {
 
-            if(isString(functionName) && isArray(paramsNameFn) && isFunction(fn)){
+            if (isString(functionName) && isArray(paramsNameFn) && isFunction(fn)) {
                 dispatcher[functionName] = {
                     fn: fn,
                     params: paramsNameFn
                 };
             }
-            else if(isString(functionName) && isFunction(paramsNameFn) && isUndefined(fn)){
+            else if (isString(functionName) && isFunction(paramsNameFn) && isUndefined(fn)) {
                 dispatcher[functionName] = {
                     fn: paramsNameFn,
                     params: null
@@ -363,32 +387,32 @@
             }
         };
 
-        self.call = function(method, params){
+        self.call = function (method, params) {
             var _call = call(method, params);
             self.toStream(JSON.stringify(_call.message));
             return _call.promise;
         };
 
-        self.notification = function(method, params){
+        self.notification = function (method, params) {
             self.toStream(JSON.stringify(notification(method, params)));
         };
 
-        self.batch = function(requests){
+        self.batch = function (requests) {
             var promises = [];
             var message = [];
 
-            _.each(requests, function(req){
-                if(req.hasOwnProperty('call')){
+            forEach(requests, function (req) {
+                if (req.hasOwnProperty('call')) {
                     var _call = call(req.call.method, req.call.params);
                     message.push(_call.message);
                     //TODO(jershell): batch reject if one promise reject, so catch reject and resolve error as result;
-                    promises.push(_call.promise.then(function(res){
+                    promises.push(_call.promise.then(function (res) {
                         return res;
-                    }, function(err){
+                    }, function (err) {
                         return err;
                     }));
                 }
-                else if(req.hasOwnProperty('notification')){
+                else if (req.hasOwnProperty('notification')) {
                     message.push(notification(req.notification.method, req.notification.params));
                 }
             });
@@ -397,7 +421,7 @@
             return _Promise.all(promises);
         };
 
-        self.messageHandler = function(rawMessage){
+        self.messageHandler = function (rawMessage) {
             try {
                 var message = JSON.parse(rawMessage);
                 return beforeResolve(message);
@@ -413,20 +437,20 @@
             }
         };
 
-        self.customException = function(code, message, data){
+        self.customException = function (code, message, data) {
             return new ServerError(code, message, data);
         };
     };
 
     if (typeof define == 'function' && define.amd) {
-        define('simple_jsonrpc', [], function() {
+        define('simple_jsonrpc', [], function () {
             return simple_jsonrpc;
         });
     }
-    else if(typeof module !== "undefined" && typeof module.exports !== "undefined" ){
+    else if (typeof module !== "undefined" && typeof module.exports !== "undefined") {
         module.exports = simple_jsonrpc;
     }
-    else if(typeof root !== "undefined"){
+    else if (typeof root !== "undefined") {
         root.simple_jsonrpc = simple_jsonrpc;
     }
     else {

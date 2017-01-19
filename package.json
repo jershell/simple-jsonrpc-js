@@ -14,8 +14,7 @@
     "jsonrpc",
     "websocket",
     "client-side",
-    "api",
-    ""
+    "api"
   ],
   "author": "QuickResto Frontend Team <jershell@mail.ru>",
   "license": "MIT",
@@ -33,6 +32,5 @@
     "ws": "^1.1.1"
   },
   "dependencies": {
-    "lodash": "^4.15.0"
   }
 }

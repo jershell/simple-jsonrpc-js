@@ -15,16 +15,10 @@
 <body>
 <div id="mocha"></div>
 <script>mocha.setup('bdd')</script>
-<script src="/bower_components/lodash/lodash.js"></script>
 <script src="/simple-jsonrpc-js.js"></script>
 <script src="/test/tests.js"></script>
 
 <script>
-    var assert = chai.assert;
-    var expect = chai.expect;
-    chai.should();
-
-    mocha.checkLeaks();
     mocha.globals(['jQuery']);
     mocha.run();
 </script>

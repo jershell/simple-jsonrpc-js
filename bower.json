@@ -6,6 +6,5 @@
   "main": "./dist/simple-jsonrpc-js.min.js",
   "ignore": [],
   "dependencies": {
-    "lodash": "4.15.0"
   }
 }
