@@ -1,6 +1,5 @@
 # simple-jsonrpc-js
 
-*Need your help for translation the description to english*
 
  + Client and server.
  + Support websocket and http.
