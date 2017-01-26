@@ -387,6 +387,12 @@
             }
         };
 
+        self.on = self.dispatch;
+
+        self.off = function (functionName) {
+          delete dispatcher[functionName];
+        };
+
         self.call = function (method, params) {
             var _call = call(method, params);
             self.toStream(JSON.stringify(_call.message));

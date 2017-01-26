@@ -41,15 +41,15 @@ var webSocketServer = new WebSocketServer.Server({
         jrpc.messageHandler(message);
     });
 
-    jrpc.dispatch('add', ['x', 'y'], add);
+    jrpc.on('add', ['x', 'y'], add);
 
-    jrpc.dispatch('mul', ['x', 'y'], function(x, y){
+    jrpc.on('mul', ['x', 'y'], function(x, y){
         return x*y;
     });
 
     var item_id = 120;
 
-    jrpc.dispatch('create', ['item', 'rewrite'], function(item, rewrite){
+    jrpc.on('create', ['item', 'rewrite'], function(item, rewrite){
         item_id ++;
         item.id = item_id;
         return item;
@@ -68,7 +68,7 @@ And on client:
         var socket = new WebSocket("ws://localhost:8090");
 
         //wait of call
-        jrpc.dispatch('view.setTitle', function(title){
+        jrpc.on('view.setTitle', function(title){
             document.getElementsByClassName('title')[0].innerHTML = title;
         });
 
@@ -124,13 +124,15 @@ More examples in directory
 
 ```batch(calls)``` - batch invocation. Returned `promise` object.  
 
-```dispatch(methodName, paramsName, handler)``` - Registration local method for incommig invocation  
+```on(methodName, paramsName, handler)``` - Registration local method for incommig invocation
+
+```off(methodName)``` - disable method for incommig invocation
 
 ```customException(code, message, data)``` - return exception with implementation-defined server-errors    
 
 ***configuration:***  
 
-```messageHandler(rawMessage)``` -  All incoming messages must be passed as a parameter.  Returned `promise` object. 
+```messageHandler(rawMessage)``` -  All incoming messages must be passed as a parameter.  Returned `promise` object.
 
 ```toStream```  - The property, a function pointer. It is necessary to determine before use. Will be called for send a message to the remote host  
 

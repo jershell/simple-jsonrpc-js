@@ -230,7 +230,7 @@ describe('Response object', function () {
         });
 
         it('Incoming call. The messageHandler(raw valid message) should be return resolved Promise', function(done){
-            JsonRpc.dispatch('add', function(x, y){
+            JsonRpc.on('add', function(x, y){
                 return x+y;
             });
 
@@ -269,7 +269,7 @@ describe('Response object', function () {
         });
 
         it('Incoming call. Positional parameters. Should be return object with result, id, jsonrpc properties', function(done){
-            JsonRpc.dispatch('add', function(x, y){
+            JsonRpc.on('add', function(x, y){
                 return x+y;
             });
 
@@ -288,7 +288,7 @@ describe('Response object', function () {
         });
 
         it('Incoming call. Named parameters. Should be return object with result, id, jsonrpc properties', function(done){
-            JsonRpc.dispatch('add', ['x', 'y'], function(x, y){
+            JsonRpc.on('add', ['x', 'y'], function(x, y){
                 return x+y;
             });
 
@@ -309,7 +309,7 @@ describe('Response object', function () {
 
         it('Incoming notification. Positional parameters. Should be nothing return', function(done){
 
-            JsonRpc.dispatch('alert', ["message", "level"], function(message, level){
+            JsonRpc.on('alert', ["message", "level"], function(message, level){
                 expect(message).to.equal("text");
                 expect(level).to.equal(5);
                 done();
@@ -323,7 +323,7 @@ describe('Response object', function () {
         });
 
         it('Incoming notification. Named parameters. Should be nothing return', function(done){
-            JsonRpc.dispatch('alert', ["message", "level"], function(message, level){
+            JsonRpc.on('alert', ["message", "level"], function(message, level){
                 expect(message).to.equal("text");
                 expect(level).to.equal(5);
                 done();
@@ -409,7 +409,7 @@ describe('Response object', function () {
         it('Named params. should be contained "Invalid params" the error property and not contained the result property', function(done){
             var inputJson;
 
-            JsonRpc.dispatch('delete', function(){
+            JsonRpc.on('delete', function(){
                return;
             });
 
@@ -431,7 +431,7 @@ describe('Response object', function () {
         it('Named params. should be contained "Invalid params" the error property and not contained the result property', function(done){
             var inputJson;
 
-            JsonRpc.dispatch('delete',["index"], function(index){
+            JsonRpc.on('delete',["index"], function(index){
                 return index;
             });
 
@@ -451,7 +451,7 @@ describe('Response object', function () {
         it('should be contained the internal error property and not contained the result property', function(done){
             var inputJson;
 
-            JsonRpc.dispatch('delete', function(){
+            JsonRpc.on('delete', function(){
                var item = {};
                return item.deleted();
             });
@@ -473,7 +473,7 @@ describe('Response object', function () {
         it('should be contained the internal error property and not contained the result property', function(done){
             var inputJson;
 
-            JsonRpc.dispatch('delete', function(index){
+            JsonRpc.on('delete', function(index){
                 return Promise.reject('3.14159265' + index);
             });
 
@@ -494,7 +494,7 @@ describe('Response object', function () {
         it('should be contained the custom error property and not contained the result property', function(done){
             var inputJson;
 
-            JsonRpc.dispatch('delete', function(index){
+            JsonRpc.on('delete', function(index){
                 throw JsonRpc.customException(-32001, "Utm offline");
                 return Promise.reject('3.14159265' + index);
             });
@@ -517,7 +517,7 @@ describe('Response object', function () {
         it('should be contained data property in the custom error', function(done){
             var inputJson;
 
-            JsonRpc.dispatch('delete', function(index){
+            JsonRpc.on('delete', function(index){
                 throw JsonRpc.customException(-32001, "Utm offline", "504 Gateway Timeout");
                 return Promise.reject('3.14159265' + index);
             });
@@ -550,19 +550,19 @@ describe('Response object', function () {
         it('Incoming request', function(done){
             var inputJson;
 
-            JsonRpc.dispatch("sum", ["x", "y", "z"], function(x, y, z){
+            JsonRpc.on("sum", ["x", "y", "z"], function(x, y, z){
                 return x+y+z;
             });
 
-            JsonRpc.dispatch("notify_hello", function(idx){
+            JsonRpc.on("notify_hello", function(idx){
                 return idx;
             });
 
-            JsonRpc.dispatch("subtract", ["x", "y"], function(x, y){
+            JsonRpc.on("subtract", ["x", "y"], function(x, y){
                 return x-y;
             });
 
-            JsonRpc.dispatch("get_data", ["id"], function(id){
+            JsonRpc.on("get_data", ["id"], function(id){
                 return {"id":id, "name": "Darkwing duck"};
             });
 
