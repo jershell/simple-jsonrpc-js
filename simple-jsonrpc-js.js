@@ -21,7 +21,7 @@
     var isArray = Array.isArray;
 
     var isObject = function (value) {
-        const type = typeof value;
+        var type = typeof value;
         return value != null && (type == 'object' || type == 'function');
     };
 
