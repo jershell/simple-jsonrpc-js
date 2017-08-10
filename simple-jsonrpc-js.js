@@ -227,7 +227,10 @@
                     var result;
 
                     if (request.hasOwnProperty('params')) {
-                        if (isArray(request.params)) {
+                        if (dispatcher[request.method].params == "pass") {
+                            result = dispatcher[request.method].fn.call(dispatcher, request.params);
+                        }
+                        else if (isArray(request.params)) {
                             result = dispatcher[request.method].fn.apply(dispatcher, request.params);
                         }
                         else if (isObject(request.params)) {
@@ -370,7 +373,13 @@
 
         self.dispatch = function (functionName, paramsNameFn, fn) {
 
-            if (isString(functionName) && isArray(paramsNameFn) && isFunction(fn)) {
+            if (isString(functionName) && paramsNameFn == "pass" && isFunction(fn)) {
+                dispatcher[functionName] = {
+                    fn: fn,
+                    params: paramsNameFn
+                };
+            }
+            else if (isString(functionName) && isArray(paramsNameFn) && isFunction(fn)) {
                 dispatcher[functionName] = {
                     fn: fn,
                     params: paramsNameFn
