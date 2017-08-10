@@ -1,6 +1,6 @@
 {
   "name": "simple-jsonrpc-js",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "simple jsonrpc client/server handler",
   "main": "index.js",
   "scripts": {
@@ -24,6 +24,7 @@
   "homepage": "https://github.com/jershell/simple-jsonrpc-js",
   "devDependencies": {
     "chai": "^3.5.0",
+    "gulp": "^3.9.1",
     "gulp-header": "^1.8.7",
     "gulp-rename": "^1.2.2",
     "gulp-uglify": "^2.0.0",
@@ -31,6 +32,5 @@
     "mocha": "^2.5.3",
     "ws": "^1.1.1"
   },
-  "dependencies": {
-  }
+  "dependencies": {}
 }

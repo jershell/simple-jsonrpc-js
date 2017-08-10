@@ -2,7 +2,7 @@
     'use strict';
     /*
      name: simple-jsonrpc-js
-     version: 0.0.7
+     version: 0.0.10
      */
     var _Promise = Promise;
 
