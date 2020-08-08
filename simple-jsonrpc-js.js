@@ -457,6 +457,49 @@
         };
     };
 
+    /**
+     * Static method for simple_jsonrpc for creating a simple_jsonrpc() instance pre-configured
+     * for use in a browser, with JSON-RPC over HTTP using standard XHR.
+     * 
+     * Example:
+     *     
+     *     var rpc = simple_jsonrpc.connect_xhr("http://rpc.example.com:8888");
+     *     rpc.call("get_account", ["johndoe"]).then(function(res) { 
+     *         console.log("johndoe full name:", res.full_name)
+     *     })
+     * 
+     */
+    simple_jsonrpc.connect_xhr = function(rpc_url, rpc_config) {
+        if ( typeof rpc_url === "undefined" || rpc_url === null ) rpc_url = "/";
+        if ( typeof rpc_config === "undefined" || rpc_config === null ) rpc_config = {};
+
+        if ( !('content-type' in rpc_config) ) rpc_config['content-type'] = 'application/json; charset=utf-8';
+        if ( !('method' in rpc_config) ) rpc_config.method = 'POST';
+        if ( !('onerror' in rpc_config) ) rpc_config.onerror = console.error;
+        var jrpc = new simple_jsonrpc();
+
+        jrpc.toStream = function(_msg){
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function() {
+                if (this.readyState != 4) return;
+
+                try {
+                    JSON.parse(this.responseText);
+                    jrpc.messageHandler(this.responseText);
+                }
+                catch (e){
+                    rpc_config.onerror(e);
+                }
+            };
+
+            xhr.open(rpc_config.method, rpc_url, true);
+            xhr.setRequestHeader('Content-type', rpc_config['content-type']);
+            xhr.send(_msg);
+        };
+
+        return jrpc;
+    };
+
     if (typeof define == 'function' && define.amd) {
         define('simple_jsonrpc', [], function () {
             return simple_jsonrpc;
