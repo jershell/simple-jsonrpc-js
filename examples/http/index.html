@@ -11,38 +11,18 @@
 <h1 class="title"></h1>
 <p class="paragraph"></p>
 <script>
-        //configure
-        var jrpc = new simple_jsonrpc();
+    // Create a Simple-JsonRPC instance which POSTs HTTP JSON-RPC requests to /rpc against the current domain
+    var jrpc = simple_jsonrpc.connect_xhr('/rpc');
 
-        jrpc.toStream = function(_msg){
-            var xhr = new XMLHttpRequest();
-            xhr.onreadystatechange = function() {
-                if (this.readyState != 4) return;
-
-                try {
-                    JSON.parse(this.responseText);
-                    jrpc.messageHandler(this.responseText);
-                }
-                catch (e){
-                    console.error(e);
-                }
-            };
-
-            xhr.open("POST", '/rpc', true);
-            xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8');
-            xhr.send(_msg);
-        };
-
-
-    //calls
+    // Call JRPC method 'add' with parameters as an array
     jrpc.call('add', [2, 3]).then(function (result) {
         document.getElementsByClassName('paragraph')[0].innerHTML += 'add(2, 3) result: ' + result + '<br>';
     });
-
+    // Call JRPC method 'mul' with a mapping (object) passed as parameters
     jrpc.call('mul', {y: 3, x: 2}).then(function (result) {
         document.getElementsByClassName('paragraph')[0].innerHTML += 'mul(2, 3) result: ' + result + '<br>';
     });
-
+    // Call JRPC method view.getTitle WITHOUT any "parameters" key
     jrpc.call('view.getTitle').then(function (result) {
         document.getElementsByClassName('title')[0].innerHTML = result;
     });
