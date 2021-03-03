@@ -212,6 +212,17 @@ More examples in directory
 
 ```toStream```  - The property, a function pointer. It is necessary to determine before use. Will be called for send a message to the remote host  
 
+```undefinedResult``` - allow to set default result of locally called function if it returns undefined
+
+usage example:
+```js
+    jrpc.undefinedResult = null; // or false, or whatever
+    jrpc.on('find', function(key) {
+        if (db.exists(key))
+	    return db.get(key);
+	// If there is nothing found then just return nothing
+    });
+```
 ## Dependecies
 
 - NodeJS <= 8.11.4 (if using within a NodeJS app, or compiling) || Latest browser (if using client side)
