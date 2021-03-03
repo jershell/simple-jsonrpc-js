@@ -106,6 +106,7 @@
             id = 0,
             dispatcher = {};
 
+        self.undefinedResult = true;
 
         function setError(jsonrpcError, exception) {
             var error = clone(jsonrpcError);
@@ -277,7 +278,7 @@
                         if (isPromise(result)) {
                             return result.then(function (res) {
                                 if (isUndefined(res)) {
-                                    res = true;
+                                    res = self.undefinedResult;
                                 }
                                 return {
                                     "jsonrpc": "2.0",
@@ -296,7 +297,7 @@
                         else {
 
                             if (isUndefined(result)) {
-                                result = true;
+                                result = self.undefinedResult;
                             }
 
                             return _Promise.resolve({
